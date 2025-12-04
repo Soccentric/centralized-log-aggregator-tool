@@ -1,0 +1,17 @@
+# Doxyfile configuration for motor_control_pwm_rpi5
+PROJECT_NAME           = "motor_control_pwm_rpi5"
+PROJECT_NUMBER         = ${PROJECT_VERSION}
+PROJECT_BRIEF          = "A comprehensive C++ project with library, app, and tests"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = src include app tests
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+FILE_PATTERNS          = *.cpp *.h
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES

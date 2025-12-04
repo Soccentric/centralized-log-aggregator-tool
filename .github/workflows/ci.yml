@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build clang clang-tidy clang-format doxygen graphviz
+
+    - name: Configure CMake
+      run: cmake --preset default
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Test
+      run: ctest --preset default
+
+    - name: Format check
+      run: |
+        find src include app tests -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+
+    - name: Configure with clang-tidy
+      run: cmake --preset clang-tidy
+
+    - name: Build with clang-tidy
+      run: cmake --build build
+
+    - name: Generate docs
+      run: |
+        if command -v doxygen &> /dev/null; then
+          cmake --build build --target doxygen
+        else
+          echo "Doxygen not available, skipping documentation generation"
+        fi

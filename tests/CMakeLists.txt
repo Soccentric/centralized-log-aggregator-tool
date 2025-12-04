@@ -1,0 +1,12 @@
+include(GoogleTest)
+
+add_executable(motor_control_pwm_rpi5_tests test_motor_control_pwm_rpi5.cpp)
+target_link_libraries(motor_control_pwm_rpi5_tests PRIVATE motor_control_pwm_rpi5 gtest_main)
+target_compile_features(motor_control_pwm_rpi5_tests PRIVATE cxx_std_17)
+
+if(ENABLE_COVERAGE)
+  target_compile_options(motor_control_pwm_rpi5_tests PRIVATE --coverage)
+  target_link_options(motor_control_pwm_rpi5_tests PRIVATE --coverage)
+endif()
+
+gtest_discover_tests(motor_control_pwm_rpi5_tests)
