@@ -24,8 +24,8 @@
 /**
  * @brief Main entry point of the application.
  * 
- * Creates an instance of motorControlPwmRpi5, demonstrates its usage by
- * calling its public methods, and terminates normally.
+ * Creates an instance of LogAggregator, configures it, and runs it as a daemon
+ * to collect and filter logs from multiple sources.
  * 
  * @param argc Number of command-line arguments (currently unused).
  * @param argv Array of command-line argument strings (currently unused).
