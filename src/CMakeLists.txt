@@ -1,3 +1,5 @@
+find_package(ZLIB REQUIRED)
+
 add_library(log_aggregator STATIC)
 target_sources(log_aggregator
   PRIVATE
@@ -9,6 +11,11 @@ target_include_directories(log_aggregator
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_compile_features(log_aggregator PUBLIC cxx_std_17)
+target_link_libraries(log_aggregator PUBLIC ZLIB::ZLIB)
+
+# Enable threading
+find_package(Threads REQUIRED)
+target_link_libraries(log_aggregator PUBLIC Threads::Threads)
 
 # Install
 install(TARGETS log_aggregator
