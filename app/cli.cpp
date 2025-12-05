@@ -19,9 +19,11 @@ void searchLogs(const std::string& file, const std::string& pattern, bool case_i
 
     std::string line;
     std::regex regex_pattern(pattern, case_insensitive ? std::regex_constants::icase : std::regex_constants::ECMAScript);
+    size_t line_number = 0;
     while (std::getline(in, line)) {
+        ++line_number;
         if (std::regex_search(line, regex_pattern)) {
-            std::cout << line << std::endl;
+            std::cout << line_number << ": " << line << std::endl;
         }
     }
 }
@@ -51,12 +53,25 @@ void tailLogs(const std::string& file, int lines = 10) {
     // Continue monitoring for new lines
     in.clear(); // Clear EOF flag
     in.seekg(0, std::ios::end);
+    std::streampos last_pos = in.tellg();
+
     while (true) {
+        in.seekg(last_pos);
         while (std::getline(in, line)) {
             std::cout << line << std::endl;
+            last_pos = in.tellg();
         }
         in.clear();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        // Check if file has been truncated or recreated
+        in.seekg(0, std::ios::end);
+        std::streampos current_size = in.tellg();
+        if (current_size < last_pos) {
+            // File was truncated, reset position
+            last_pos = 0;
+            in.seekg(0);
+        }
     }
 }
 

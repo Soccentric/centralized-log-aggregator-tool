@@ -103,6 +103,13 @@ public:
      */
     void setMaxFileSize(size_t size);
 
+    /**
+     * @brief Checks if a log line matches any of the filters.
+     * @param line The log line to check.
+     * @return true if the line matches any filter, false otherwise.
+     */
+    bool matchesFilter(const std::string& line);
+
 private:
     /**
      * @class Impl

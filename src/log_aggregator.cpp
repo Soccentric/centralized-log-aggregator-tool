@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <sys/inotify.h>
 #include <unistd.h>
+#include <ctime>
+#include <iomanip>
 
 namespace fs = std::filesystem;
 
@@ -74,6 +76,10 @@ public:
 
     void setMaxFileSize(size_t size) {
         max_file_size_ = size * 1024 * 1024;
+    }
+
+    bool matchesFilter(const std::string& line) {
+        return shouldFilter(line);
     }
 
 private:
@@ -141,9 +147,17 @@ private:
 
         std::ofstream out(output_file_, std::ios::app);
         if (out.is_open()) {
-            auto now = std::chrono::system_clock::now();
-            auto time_t = std::chrono::system_clock::to_time_t(now);
-            out << std::ctime(&time_t) << ": " << line << std::endl;
+            // Only add timestamp if line doesn't already start with a timestamp-like pattern
+            if (line.find_first_of("0123456789") != 0 || line.find(':') == std::string::npos) {
+                auto now = std::chrono::system_clock::now();
+                auto time_t = std::chrono::system_clock::to_time_t(now);
+                std::tm tm = *std::localtime(&time_t);
+                char time_str[20];
+                std::strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &tm);
+                out << time_str << " " << line << std::endl;
+            } else {
+                out << line << std::endl;
+            }
         }
     }
 
@@ -203,6 +217,10 @@ void LogAggregator::setOutputFile(const std::string& path) {
 
 void LogAggregator::setMaxFileSize(size_t size) {
     pimpl_->setMaxFileSize(size);
+}
+
+bool LogAggregator::matchesFilter(const std::string& line) {
+    return pimpl_->matchesFilter(line);
 }
 
 } // namespace log_aggregator

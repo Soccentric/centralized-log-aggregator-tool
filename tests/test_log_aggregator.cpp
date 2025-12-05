@@ -46,4 +46,25 @@ TEST(LogAggregatorTest, SetMaxFileSize) {
     EXPECT_NO_THROW(aggregator.setMaxFileSize(50););
 }
 
+TEST(LogAggregatorTest, MatchesFilterNoFilters) {
+    log_aggregator::LogAggregator aggregator;
+    EXPECT_TRUE(aggregator.matchesFilter("some log line"));
+}
+
+TEST(LogAggregatorTest, MatchesFilterWithFilters) {
+    log_aggregator::LogAggregator aggregator;
+    aggregator.addFilter("ERROR");
+    aggregator.addFilter("WARNING");
+    EXPECT_TRUE(aggregator.matchesFilter("This is an ERROR message"));
+    EXPECT_TRUE(aggregator.matchesFilter("This is a WARNING message"));
+    EXPECT_FALSE(aggregator.matchesFilter("This is an info message"));
+}
+
+TEST(LogAggregatorTest, MatchesFilterCaseSensitive) {
+    log_aggregator::LogAggregator aggregator;
+    aggregator.addFilter("error");
+    EXPECT_TRUE(aggregator.matchesFilter("This is an error message"));
+    EXPECT_FALSE(aggregator.matchesFilter("This is an ERROR message"));
+}
+
 } // namespace
