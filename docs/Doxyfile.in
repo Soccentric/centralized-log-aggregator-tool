@@ -1,5 +1,5 @@
-# Doxyfile configuration for motor_control_pwm_rpi5
-PROJECT_NAME           = "motor_control_pwm_rpi5"
+# Doxyfile configuration for log_aggregator
+PROJECT_NAME           = "log_aggregator"
 PROJECT_NUMBER         = ${PROJECT_VERSION}
 PROJECT_BRIEF          = "A comprehensive C++ project with library, app, and tests"
 OUTPUT_DIRECTORY       = docs

@@ -4,7 +4,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
     set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/html/index.html)
 
-    set(DOXYGEN_PROJECT_NAME "motor_control_pwm_rpi5")
+    set(DOXYGEN_PROJECT_NAME "log_aggregator")
     set(DOXYGEN_PROJECT_VERSION ${PROJECT_VERSION})
     set(DOXYGEN_PROJECT_BRIEF "A comprehensive C++ project")
     set(DOXYGEN_RECURSIVE YES)

@@ -1,20 +1,18 @@
 /**
  * @file main.cpp
- * @brief Main application entry point for motor_control_pwm_rpi5.
+ * @brief Main application entry point for log_aggregator.
  * @author Sandesh Ghimire | sandesh@soccentric
  * @copyright (C) Soccentric LLC. All rights reserved.
  * 
  * This file contains the main() function that serves as the entry point
- * for the motor_control_pwm_rpi5 application. It demonstrates basic usage
- * of the library API.
+ * for the log_aggregator application. It runs the log aggregation daemon.
  * 
  * @version 1.0
- * @date 2025-11-26
+ * @date 2025-12-04
  * 
  * @details
- * The application creates an instance of the main library class and
- * executes its primary functionality. Command-line arguments are currently
- * unused but available for future extensions.
+ * The application creates an instance of LogAggregator and runs it as a daemon
+ * to collect and filter logs from multiple sources.
  */
 
 #include "log_aggregator/log_aggregator.h"
