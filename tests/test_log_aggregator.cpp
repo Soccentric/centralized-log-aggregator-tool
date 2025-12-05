@@ -654,5 +654,3 @@ TEST(LogAggregatorEdgeCaseTest, SpecialRegexCharacters) {
   EXPECT_TRUE(aggregator.addFilter("file\\.log"));
   EXPECT_TRUE(aggregator.addFilter("path/to/.*"));
 }
-
-}  // namespace
