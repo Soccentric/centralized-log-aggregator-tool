@@ -18,9 +18,18 @@
 
 #include "motor_control_pwm_rpi5/motor_control_pwm_rpi5.h"
 #include <iostream>
-#include <utility>
+#include <fstream>
+#include <thread>
+#include <atomic>
+#include <filesystem>
+#include <chrono>
+#include <unordered_map>
+#include <sys/inotify.h>
+#include <unistd.h>
 
-namespace motor_control_pwm_rpi5 {
+namespace fs = std::filesystem;
+
+namespace log_aggregator {
 
 /**
  * @class motorControlPwmRpi5::Impl
@@ -32,27 +41,143 @@ namespace motor_control_pwm_rpi5 {
  * 
  * @invariant name_ is never modified after construction.
  */
-class motorControlPwmRpi5::Impl {
+class LogAggregator::Impl {
 public:
-    /**
-     * @brief Constructs the implementation object.
-     * 
-     * Initializes the implementation with the provided name string using
-     * move semantics for efficiency.
-     * 
-     * @param name The name string to store (moved into name_).
-     * 
-     * @note The explicit keyword prevents implicit conversions.
-     */
-    explicit Impl(std::string name) : name_(std::move(name)) {}
-    
-    /**
-     * @brief The name associated with this object.
-     * 
-     * Stores the name provided during construction. This member is immutable
-     * after initialization (should only be accessed, not modified).
-     */
-    std::string name_;
+    Impl() : running_(false), max_file_size_(100 * 1024 * 1024) {} // 100MB default
+
+    void start() {
+        if (running_) return;
+        running_ = true;
+
+        // Initialize inotify
+        inotify_fd_ = inotify_init();
+        if (inotify_fd_ < 0) {
+            throw std::runtime_error("Failed to initialize inotify");
+        }
+
+        // Add watches for sources
+        for (const auto& source : sources_) {
+            int wd = inotify_add_watch(inotify_fd_, source.c_str(), IN_MODIFY);
+            if (wd < 0) {
+                std::cerr << "Failed to watch " << source << std::endl;
+            } else {
+                watches_[wd] = source;
+            }
+        }
+
+        // Start monitoring thread
+        monitor_thread_ = std::thread(&Impl::monitor, this);
+    }
+
+    void stop() {
+        if (!running_) return;
+        running_ = false;
+        if (monitor_thread_.joinable()) {
+            monitor_thread_.join();
+        }
+        close(inotify_fd_);
+    }
+
+    void addSource(const std::string& path) {
+        sources_.push_back(path);
+    }
+
+    void addFilter(const std::string& pattern) {
+        filters_.emplace_back(pattern);
+    }
+
+    void setOutputFile(const std::string& path) {
+        output_file_ = path;
+    }
+
+    void setMaxFileSize(size_t size) {
+        max_file_size_ = size * 1024 * 1024;
+    }
+
+private:
+    void monitor() {
+        const size_t BUF_LEN = 4096;
+        char buffer[BUF_LEN];
+
+        while (running_) {
+            int length = read(inotify_fd_, buffer, BUF_LEN);
+            if (length < 0) {
+                if (errno != EINTR) {
+                    std::cerr << "Read error" << std::endl;
+                }
+                continue;
+            }
+
+            int i = 0;
+            while (i < length) {
+                struct inotify_event* event = (struct inotify_event*)&buffer[i];
+                if (event->mask & IN_MODIFY) {
+                    auto it = watches_.find(event->wd);
+                    if (it != watches_.end()) {
+                        processFile(it->second);
+                    }
+                }
+                i += sizeof(struct inotify_event) + event->len;
+            }
+        }
+    }
+
+    void processFile(const std::string& path) {
+        std::ifstream file(path, std::ios::in);
+        if (!file.is_open()) return;
+
+        std::string line;
+        while (std::getline(file, line)) {
+            if (shouldFilter(line)) {
+                writeToOutput(line);
+            }
+        }
+        // Note: This simplistic implementation reads the entire file each time.
+        // A production version should track file positions.
+    }
+
+    bool shouldFilter(const std::string& line) {
+        if (filters_.empty()) return true;
+        for (const auto& regex : filters_) {
+            if (std::regex_search(line, regex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void writeToOutput(const std::string& line) {
+        if (output_file_.empty()) return;
+
+        // Check file size and rotate if needed
+        if (fs::exists(output_file_) && fs::file_size(output_file_) > max_file_size_) {
+            rotateFile();
+        }
+
+        std::ofstream out(output_file_, std::ios::app);
+        if (out.is_open()) {
+            auto now = std::chrono::system_clock::now();
+            auto time_t = std::chrono::system_clock::to_time_t(now);
+            out << std::ctime(&time_t) << ": " << line << std::endl;
+        }
+    }
+
+    void rotateFile() {
+        std::string rotated = output_file_ + ".1";
+        if (fs::exists(rotated)) {
+            fs::remove(rotated);
+        }
+        fs::rename(output_file_, rotated);
+    }
+
+    std::vector<std::string> sources_;
+    std::vector<std::regex> filters_;
+    std::string output_file_;
+    size_t max_file_size_;
+    std::atomic<bool> running_;
+    int inotify_fd_;
+    std::unordered_map<int, std::string> watches_;
+    std::thread monitor_thread_;
 };
 
 /**

@@ -1,181 +1,121 @@
 /**
- * @file motor_control_pwm_rpi5.h
- * @brief Main header file for the motor_control_pwm_rpi5 library.
+ * @file log_aggregator.h
+ * @brief Main header file for the log_aggregator library.
  * @author Sandesh Ghimire | sandesh@soccentric
  * @copyright (C) Soccentric LLC. All rights reserved.
  * 
- * This header file provides the public interface for the motor_control_pwm_rpi5 library.
+ * This header file provides the public interface for the log_aggregator library.
  * It contains the main class declaration and related type definitions.
  * 
  * @version 1.0
- * @date 2025-11-26
+ * @date 2025-12-04
  * 
  * @details
- * The library implements a modern C++ design using the PIMPL (Pointer to Implementation)
- * idiom to provide binary compatibility and reduce compilation dependencies.
+ * The library implements a centralized log aggregator with smart filtering.
  * 
- * @note This library requires C++14 or later.
- * 
- * @example
- * @code
- * #include "motor_control_pwm_rpi5/motor_control_pwm_rpi5.h"
- * 
- * int main() {
- *     motor_control_pwm_rpi5::motorControlPwmRpi5 obj("example");
- *     obj.run();
- *     return 0;
- * }
- * @endcode
+ * @note This library requires C++17 or later.
  */
 
-#ifndef MOTOR_CONTROL_PWM_RPI5_H
-#define MOTOR_CONTROL_PWM_RPI5_H
+#ifndef LOG_AGGREGATOR_H
+#define LOG_AGGREGATOR_H
 
 #include <string>
+#include <vector>
+#include <regex>
 #include <memory>
 
 /**
- * @namespace motor_control_pwm_rpi5
- * @brief Main namespace for motor_control_pwm_rpi5 library.
- * 
- * This namespace contains all public interfaces and classes provided by
- * the motor_control_pwm_rpi5 library. It encapsulates the library's functionality
- * and prevents naming conflicts with other libraries.
+ * @namespace log_aggregator
+ * @brief Main namespace for log_aggregator library.
  */
-namespace motor_control_pwm_rpi5 {
+namespace log_aggregator {
 
 /**
- * @class motorControlPwmRpi5
- * @brief Primary class implementing the core functionality of motor_control_pwm_rpi5.
- * 
- * This class provides the main interface for using the motor_control_pwm_rpi5 library.
- * It implements the PIMPL pattern to hide implementation details and maintain
- * a stable ABI across library versions.
- * 
- * @details
- * The class manages internal resources through a private implementation class,
- * ensuring exception-safe resource management and enabling efficient copy semantics.
- * 
- * @invariant The internal implementation pointer (pimpl_) is always valid after
- *            construction and until destruction.
- * 
- * @thread_safety The class is not thread-safe. External synchronization is required
- *                for concurrent access.
- * 
- * @see run(), get_name()
+ * @enum Severity
+ * @brief Log severity levels.
  */
-class motorControlPwmRpi5 {
+enum class Severity {
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    CRITICAL
+};
+
+/**
+ * @struct LogEntry
+ * @brief Represents a log entry.
+ */
+struct LogEntry {
+    std::string timestamp;
+    Severity severity;
+    std::string source;
+    std::string message;
+};
+
+/**
+ * @class LogAggregator
+ * @brief Primary class implementing the core functionality of log_aggregator.
+ */
+class LogAggregator {
 public:
     /**
-     * @brief Constructs a new motorControlPwmRpi5 object with the given name.
-     * 
-     * Initializes the object with a user-provided name string. The name is stored
-     * internally and can be retrieved later using get_name().
-     * 
-     * @param name The name string to associate with this object. Must not be empty.
-     * 
-     * @throws std::invalid_argument if name is empty.
-     * @throws std::bad_alloc if memory allocation fails during construction.
-     * 
-     * @pre name must be a valid non-empty string.
-     * @post Object is fully initialized and ready for use.
-     * 
-     * @note The name parameter is passed by value to enable move semantics optimization.
-     * 
-     * @par Example:
-     * @code
-     * motor_control_pwm_rpi5::motorControlPwmRpi5 obj("MyName");
-     * @endcode
+     * @brief Constructs a new LogAggregator object.
      */
-    explicit motorControlPwmRpi5(std::string name);
+    LogAggregator();
 
     /**
-     * @brief Destroys the motorControlPwmRpi5 object and releases all resources.
-     * 
-     * The destructor ensures proper cleanup of all internal resources managed by
-     * the implementation class. It is automatically called when the object goes
-     * out of scope.
-     * 
-     * @note The destructor is declared to enable proper cleanup of the PIMPL pointer.
-     * 
-     * @exception noexcept This destructor does not throw exceptions.
+     * @brief Destroys the LogAggregator object.
      */
-    ~motorControlPwmRpi5();
+    ~LogAggregator();
 
     /**
-     * @brief Retrieves the name associated with this object.
-     * 
-     * Returns a copy of the name string that was provided during object construction.
-     * The returned string is independent of the internal storage.
-     * 
-     * @return std::string A copy of the stored name.
-     * 
-     * @throws std::bad_alloc if string copy allocation fails.
-     * 
-     * @note This is a const member function and does not modify the object state.
-     * 
-     * @par Complexity:
-     * O(n) where n is the length of the name string (due to copy operation).
-     * 
-     * @par Example:
-     * @code
-     * motor_control_pwm_rpi5::motorControlPwmRpi5 obj("Test");
-     * std::string name = obj.get_name();  // name == "Test"
-     * @endcode
+     * @brief Starts the log aggregation daemon.
      */
-    std::string get_name() const;
+    void start();
 
     /**
-     * @brief Executes the main functionality of the motor_control_pwm_rpi5 library.
-     * 
-     * This method performs the primary operation of this class, which includes
-     * processing the stored name and generating output. The specific behavior
-     * depends on the library's implementation details.
-     * 
-     * @throws std::runtime_error if execution encounters an error.
-     * @throws std::bad_alloc if memory allocation is required and fails.
-     * 
-     * @pre Object must be properly initialized (constructor completed successfully).
-     * @post The operation completes and any side effects are applied.
-     * 
-     * @note This method may produce output to stdout.
-     * 
-     * @par Example:
-     * @code
-     * motor_control_pwm_rpi5::motorControlPwmRpi5 obj("Example");
-     * obj.run();  // Executes the main functionality
-     * @endcode
-     * 
-     * @see get_name()
+     * @brief Stops the log aggregation.
      */
-    void run();
+    void stop();
+
+    /**
+     * @brief Adds a log source file to monitor.
+     * @param path Path to the log file.
+     */
+    void addSource(const std::string& path);
+
+    /**
+     * @brief Adds a filter pattern.
+     * @param pattern Regex pattern to filter logs.
+     */
+    void addFilter(const std::string& pattern);
+
+    /**
+     * @brief Sets the output file for aggregated logs.
+     * @param path Output file path.
+     */
+    void setOutputFile(const std::string& path);
+
+    /**
+     * @brief Sets the maximum file size before rotation (in MB).
+     * @param size Size in MB.
+     */
+    void setMaxFileSize(size_t size);
 
 private:
     /**
      * @class Impl
      * @brief Private implementation class (PIMPL pattern).
-     * 
-     * This forward-declared class contains the actual implementation details
-     * of motorControlPwmRpi5. It is hidden from the public interface to reduce
-     * compilation dependencies and maintain ABI stability.
-     * 
-     * @note This class is only defined in the implementation file (.cpp).
      */
     class Impl;
     
     /**
-     * @brief Pointer to the private implementation (PIMPL idiom).
-     * 
-     * This unique pointer manages the lifetime of the implementation class.
-     * It provides automatic resource cleanup and prevents memory leaks.
-     * 
-     * @invariant pimpl_ is never null after construction completes.
-     * 
-     * @see Impl
+     * @brief Pointer to the private implementation.
      */
     std::unique_ptr<Impl> pimpl_;
 };
 
-} // namespace motor_control_pwm_rpi5
+} // namespace log_aggregator
 
-#endif // MOTOR_CONTROL_PWM_RPI5_H
+#endif // LOG_AGGREGATOR_H
