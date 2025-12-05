@@ -17,7 +17,7 @@
  * unused but available for future extensions.
  */
 
-#include "motor_control_pwm_rpi5/motor_control_pwm_rpi5.h"
+#include "log_aggregator/log_aggregator.h"
 #include <iostream>
 #include <csignal>
 #include <unistd.h>

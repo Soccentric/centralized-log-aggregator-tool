@@ -1,7 +1,7 @@
 add_library(log_aggregator STATIC)
 target_sources(log_aggregator
   PRIVATE
-    motor_control_pwm_rpi5.cpp
+    log_aggregator.cpp
 )
 target_include_directories(log_aggregator
   PUBLIC
