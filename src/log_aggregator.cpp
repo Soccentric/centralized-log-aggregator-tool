@@ -38,11 +38,12 @@ public:
 
         // Add watches for sources
         for (const auto& source : sources_) {
-            int wd = inotify_add_watch(inotify_fd_, source.c_str(), IN_MODIFY);
+            int wd = inotify_add_watch(inotify_fd_, source.c_str(), IN_MODIFY | IN_DELETE_SELF | IN_MOVE_SELF);
             if (wd < 0) {
                 std::cerr << "Failed to watch " << source << std::endl;
             } else {
                 watches_[wd] = source;
+                file_positions_[source] = 0;
             }
         }
 
@@ -92,10 +93,13 @@ private:
             int i = 0;
             while (i < length) {
                 struct inotify_event* event = (struct inotify_event*)&buffer[i];
-                if (event->mask & IN_MODIFY) {
-                    auto it = watches_.find(event->wd);
-                    if (it != watches_.end()) {
+                auto it = watches_.find(event->wd);
+                if (it != watches_.end()) {
+                    if (event->mask & IN_MODIFY) {
                         processFile(it->second);
+                    } else if (event->mask & (IN_DELETE_SELF | IN_MOVE_SELF)) {
+                        // File was deleted or moved, reset position
+                        file_positions_[it->second] = 0;
                     }
                 }
                 i += sizeof(struct inotify_event) + event->len;
@@ -107,14 +111,14 @@ private:
         std::ifstream file(path, std::ios::in);
         if (!file.is_open()) return;
 
+        file.seekg(file_positions_[path]);
         std::string line;
         while (std::getline(file, line)) {
             if (shouldFilter(line)) {
                 writeToOutput(line);
             }
         }
-        // Note: This simplistic implementation reads the entire file each time.
-        // A production version should track file positions.
+        file_positions_[path] = file.tellg();
     }
 
     bool shouldFilter(const std::string& line) {
@@ -144,11 +148,22 @@ private:
     }
 
     void rotateFile() {
-        std::string rotated = output_file_ + ".1";
-        if (fs::exists(rotated)) {
-            fs::remove(rotated);
+        const int max_backups = 5;
+        for (int i = max_backups - 1; i >= 1; --i) {
+            std::string current = output_file_ + "." + std::to_string(i);
+            std::string next = output_file_ + "." + std::to_string(i + 1);
+            if (fs::exists(current)) {
+                if (fs::exists(next)) {
+                    fs::remove(next);
+                }
+                fs::rename(current, next);
+            }
         }
-        fs::rename(output_file_, rotated);
+        std::string first_backup = output_file_ + ".1";
+        if (fs::exists(first_backup)) {
+            fs::remove(first_backup);
+        }
+        fs::rename(output_file_, first_backup);
     }
 
     std::vector<std::string> sources_;
@@ -158,6 +173,7 @@ private:
     std::atomic<bool> running_;
     int inotify_fd_;
     std::unordered_map<int, std::string> watches_;
+    std::unordered_map<std::string, std::streampos> file_positions_;
     std::thread monitor_thread_;
 };
 
