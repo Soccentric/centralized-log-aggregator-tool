@@ -1,8 +1,8 @@
-add_executable(motor_control_pwm_rpi5_app main.cpp)
-target_link_libraries(motor_control_pwm_rpi5_app PRIVATE motor_control_pwm_rpi5)
-target_compile_features(motor_control_pwm_rpi5_app PRIVATE cxx_std_17)
+add_executable(log_aggregator_app main.cpp)
+target_link_libraries(log_aggregator_app PRIVATE log_aggregator)
+target_compile_features(log_aggregator_app PRIVATE cxx_std_17)
 
 # Install
-install(TARGETS motor_control_pwm_rpi5_app
+install(TARGETS log_aggregator_app
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

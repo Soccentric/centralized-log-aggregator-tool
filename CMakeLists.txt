@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(motor_control_pwm_rpi5 VERSION 1.0.0 LANGUAGES CXX)
+project(log_aggregator VERSION 1.0.0 LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -42,10 +42,10 @@ add_subdirectory(docs)
 
 # Install
 include(GNUInstallDirs)
-install(EXPORT motor_control_pwm_rpi5Targets
-  FILE motor_control_pwm_rpi5Targets.cmake
-  NAMESPACE motor_control_pwm_rpi5::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/motor_control_pwm_rpi5
+install(EXPORT log_aggregatorTargets
+  FILE log_aggregatorTargets.cmake
+  NAMESPACE log_aggregator::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/log_aggregator
 )
 
 # Packaging

@@ -180,59 +180,32 @@ private:
     std::thread monitor_thread_;
 };
 
-/**
- * @brief Constructs a motorControlPwmRpi5 object.
- * 
- * Creates a new instance by allocating and initializing the private
- * implementation object with the provided name.
- * 
- * @param name The name to associate with this object (moved).
- * 
- * @throws std::bad_alloc if memory allocation for pimpl_ fails.
- * 
- * @note This implementation uses move semantics to avoid unnecessary copies.
- */
-motorControlPwmRpi5::motorControlPwmRpi5(std::string name)
-    : pimpl_(std::make_unique<Impl>(std::move(name))) {
+LogAggregator::LogAggregator() : pimpl_(std::make_unique<Impl>()) {}
+
+LogAggregator::~LogAggregator() = default;
+
+void LogAggregator::start() {
+    pimpl_->start();
 }
 
-/**
- * @brief Destructor for motorControlPwmRpi5.
- * 
- * Default implementation is sufficient as unique_ptr handles cleanup automatically.
- * This destructor must be defined in the .cpp file (not inline in the header)
- * because the Impl class is incomplete in the header.
- */
-motorControlPwmRpi5::~motorControlPwmRpi5() = default;
-
-/**
- * @brief Retrieves the name from the implementation.
- * 
- * Returns a copy of the stored name string.
- * 
- * @return A copy of the name string.
- * 
- * @throws std::bad_alloc if string copy fails.
- * 
- * @note This is a const member function that doesn't modify object state.
- */
-std::string motorControlPwmRpi5::get_name() const {
-    return pimpl_->name_;
+void LogAggregator::stop() {
+    pimpl_->stop();
 }
 
-/**
- * @brief Executes the main functionality.
- * 
- * Performs the primary operation of this class by outputting the stored
- * name to standard output.
- * 
- * @post Outputs a message to std::cout.
- * 
- * @note This implementation writes to stdout and may fail if output is redirected
- *       to an invalid stream.
- */
-void motorControlPwmRpi5::run() {
-    std::cout << "Running motor_control_pwm_rpi5 with name: " << pimpl_->name_ << std::endl;
+void LogAggregator::addSource(const std::string& path) {
+    pimpl_->addSource(path);
 }
 
-} // namespace motor_control_pwm_rpi5
+void LogAggregator::addFilter(const std::string& pattern) {
+    pimpl_->addFilter(pattern);
+}
+
+void LogAggregator::setOutputFile(const std::string& path) {
+    pimpl_->setOutputFile(path);
+}
+
+void LogAggregator::setMaxFileSize(size_t size) {
+    pimpl_->setMaxFileSize(size);
+}
+
+} // namespace log_aggregator

@@ -1,18 +1,18 @@
-add_library(motor_control_pwm_rpi5 STATIC)
-target_sources(motor_control_pwm_rpi5
+add_library(log_aggregator STATIC)
+target_sources(log_aggregator
   PRIVATE
     motor_control_pwm_rpi5.cpp
 )
-target_include_directories(motor_control_pwm_rpi5
+target_include_directories(log_aggregator
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_compile_features(motor_control_pwm_rpi5 PUBLIC cxx_std_17)
+target_compile_features(log_aggregator PUBLIC cxx_std_17)
 
 # Install
-install(TARGETS motor_control_pwm_rpi5
-  EXPORT motor_control_pwm_rpi5Targets
+install(TARGETS log_aggregator
+  EXPORT log_aggregatorTargets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -19,6 +19,9 @@
 
 #include "motor_control_pwm_rpi5/motor_control_pwm_rpi5.h"
 #include <iostream>
+#include <csignal>
+#include <unistd.h>
+#include <sys/stat.h>
 
 /**
  * @brief Main entry point of the application.
@@ -39,17 +42,50 @@
  * ./my_cmake_project
  * @endcode
  */
-int main(int argc, char* argv[]) {
-    // Suppress unused parameter warnings
-    (void)argc;
-    (void)argv;
+log_aggregator::LogAggregator aggregator;
+volatile sig_atomic_t stop_flag = 0;
 
-    // Create an instance of the main library class
-    motor_control_pwm_rpi5::motorControlPwmRpi5 instance("motor_control_pwm_rpi5");
-    
-    // Demonstrate basic functionality
-    std::cout << "Hello from " << instance.get_name() << std::endl;
-    instance.run();
+void signal_handler(int signum) {
+    stop_flag = 1;
+    aggregator.stop();
+}
+
+int main(int argc, char* argv[]) {
+    // Daemonize
+    pid_t pid = fork();
+    if (pid < 0) {
+        std::cerr << "Fork failed" << std::endl;
+        return 1;
+    }
+    if (pid > 0) {
+        return 0; // Parent exits
+    }
+
+    // Child becomes session leader
+    if (setsid() < 0) {
+        return 1;
+    }
+
+    // Set up signal handler
+    signal(SIGTERM, signal_handler);
+    signal(SIGINT, signal_handler);
+
+    // Configure aggregator
+    aggregator.addSource("/var/log/syslog");
+    aggregator.addSource("/var/log/kern.log");
+    aggregator.setOutputFile("/var/log/aggregated.log");
+    aggregator.setMaxFileSize(100); // 100MB
+
+    // Add filters (example: filter ERROR and WARNING)
+    aggregator.addFilter("ERROR|WARNING");
+
+    // Start aggregating
+    aggregator.start();
+
+    // Wait for stop signal
+    while (!stop_flag) {
+        sleep(1);
+    }
 
     return 0;
 }
