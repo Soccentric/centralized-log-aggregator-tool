@@ -31,6 +31,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #include <thread>
 
 #include "log_aggregator/log_aggregator.h"
