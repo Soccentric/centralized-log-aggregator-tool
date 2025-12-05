@@ -34,7 +34,14 @@ make install
 
 ### Running the Daemon
 ```bash
+# Run with default settings
 sudo ./log_aggregator_app
+
+# Run with custom configuration
+sudo ./log_aggregator_app -s /var/log/syslog,/var/log/kern.log,/var/log/auth.log -o /var/log/aggregated.log -m 50 -f "ERROR|CRITICAL" -d
+
+# Run in foreground (no daemon)
+./log_aggregator_app --no-daemon
 ```
 
 ### CLI Commands
@@ -42,9 +49,33 @@ sudo ./log_aggregator_app
 # Search logs
 ./log_aggregator_cli search /var/log/aggregated.log "ERROR"
 
-# Tail logs in real-time
+# Case-insensitive search
+./log_aggregator_cli search /var/log/aggregated.log "error" --ignore-case
+
+# Tail logs in real-time (show last 10 lines then follow)
 ./log_aggregator_cli tail /var/log/aggregated.log
+
+# Tail with custom number of initial lines
+./log_aggregator_cli tail /var/log/aggregated.log --lines 20
+
+# Show help
+./log_aggregator_cli --help
 ```
+
+### Command Line Options
+
+#### Daemon Options
+- `-s, --sources`: Comma-separated list of log source files to monitor (default: /var/log/syslog,/var/log/kern.log)
+- `-o, --output`: Output file for aggregated logs (default: /var/log/aggregated.log)
+- `-m, --max-size`: Maximum file size in MB before rotation (default: 100)
+- `-f, --filters`: Comma-separated regex patterns to filter logs (default: ERROR|WARNING)
+- `-d, --daemon`: Run as daemon (default: true)
+
+#### CLI Options
+- `search <file> <pattern>`: Search logs for regex pattern
+  - `-i, --ignore-case`: Case insensitive search
+- `tail <file>`: Tail logs in real-time
+  - `-n, --lines`: Number of lines to show initially (default: 10)
 
 ## Configuration
 The daemon monitors `/var/log/syslog` and `/var/log/kern.log` by default, filters for ERROR and WARNING messages, and outputs to `/var/log/aggregated.log` with 100MB rotation.

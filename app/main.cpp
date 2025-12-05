@@ -25,20 +25,17 @@
 /**
  * @brief Main entry point of the application.
  * 
- * Creates an instance of LogAggregator, configures it, and runs it as a daemon
- * to collect and filter logs from multiple sources.
+ * Parses command-line arguments using CLI11, configures the LogAggregator,
+ * and runs it as a daemon to collect and filter logs from multiple sources.
  * 
- * @param argc Number of command-line arguments (currently unused).
- * @param argv Array of command-line argument strings (currently unused).
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line argument strings.
  * 
  * @return 0 on successful execution, non-zero on error.
  * 
- * @note Currently, command-line arguments are not processed. Future versions
- *       may add support for configuration via command-line options.
- * 
  * @par Example usage:
  * @code
- * ./my_cmake_project
+ * ./log_aggregator_app -s /var/log/syslog,/var/log/kern.log -o /var/log/aggregated.log -f "ERROR|WARNING"
  * @endcode
  */
 log_aggregator::LogAggregator aggregator;
@@ -50,19 +47,41 @@ void signal_handler(int signum) {
 }
 
 int main(int argc, char* argv[]) {
-    // Daemonize
-    pid_t pid = fork();
-    if (pid < 0) {
-        std::cerr << "Fork failed" << std::endl;
-        return 1;
-    }
-    if (pid > 0) {
-        return 0; // Parent exits
-    }
+    CLI::App app{"Centralized Log Aggregator Daemon"};
 
-    // Child becomes session leader
-    if (setsid() < 0) {
-        return 1;
+    std::vector<std::string> sources = {"/var/log/syslog", "/var/log/kern.log"};
+    std::string output_file = "/var/log/aggregated.log";
+    size_t max_size = 100;
+    std::vector<std::string> filters = {"ERROR|WARNING"};
+    bool daemon_mode = true;
+
+    app.add_option("-s,--sources", sources, "Log source files to monitor")
+        ->delimiter(',')
+        ->expected(1, -1);
+    app.add_option("-o,--output", output_file, "Output file for aggregated logs");
+    app.add_option("-m,--max-size", max_size, "Maximum file size in MB before rotation");
+    app.add_option("-f,--filters", filters, "Regex patterns to filter logs")
+        ->delimiter(',')
+        ->expected(1, -1);
+    app.add_flag("-d,--daemon", daemon_mode, "Run as daemon (default: true)");
+
+    CLI11_PARSE(app, argc, argv);
+
+    if (daemon_mode) {
+        // Daemonize
+        pid_t pid = fork();
+        if (pid < 0) {
+            std::cerr << "Fork failed" << std::endl;
+            return 1;
+        }
+        if (pid > 0) {
+            return 0; // Parent exits
+        }
+
+        // Child becomes session leader
+        if (setsid() < 0) {
+            return 1;
+        }
     }
 
     // Set up signal handler
@@ -70,13 +89,14 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signal_handler);
 
     // Configure aggregator
-    aggregator.addSource("/var/log/syslog");
-    aggregator.addSource("/var/log/kern.log");
-    aggregator.setOutputFile("/var/log/aggregated.log");
-    aggregator.setMaxFileSize(100); // 100MB
-
-    // Add filters (example: filter ERROR and WARNING)
-    aggregator.addFilter("ERROR|WARNING");
+    for (const auto& source : sources) {
+        aggregator.addSource(source);
+    }
+    aggregator.setOutputFile(output_file);
+    aggregator.setMaxFileSize(max_size);
+    for (const auto& filter : filters) {
+        aggregator.addFilter(filter);
+    }
 
     // Start aggregating
     aggregator.start();
