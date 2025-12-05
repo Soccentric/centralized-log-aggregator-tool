@@ -20,6 +20,7 @@
 #include <csignal>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <CLI/CLI.hpp>
 
 /**
  * @brief Main entry point of the application.
