@@ -1,6 +1,6 @@
 include(GoogleTest)
 
-add_executable(log_aggregator_tests test_motor_control_pwm_rpi5.cpp)
+add_executable(log_aggregator_tests test_log_aggregator.cpp)
 target_link_libraries(log_aggregator_tests PRIVATE log_aggregator gtest_main)
 target_compile_features(log_aggregator_tests PRIVATE cxx_std_17)
 
