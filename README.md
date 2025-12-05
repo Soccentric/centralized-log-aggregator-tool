@@ -4,11 +4,11 @@ A lightweight daemon that collects logs from multiple sources (syslog, applicati
 
 ## Features
 
-- Collects logs from multiple sources using inotify
-- Applies regex-based filtering
-- Efficient storage with automatic rotation
-- Daemon mode for background operation
-- CLI tool for searching and tailing logs
+- Collects logs from multiple sources using inotify with efficient file position tracking
+- Applies regex-based filtering with case-sensitive and case-insensitive options
+- Efficient storage with automatic rotation (up to 5 backup files)
+- Daemon mode for background operation with proper signal handling
+- CLI tool for searching (with line numbers) and real-time tailing with truncation detection
 
 ## Building
 
@@ -72,9 +72,9 @@ sudo ./log_aggregator_app -s /var/log/syslog,/var/log/kern.log,/var/log/auth.log
 - `-d, --daemon`: Run as daemon (default: true)
 
 #### CLI Options
-- `search <file> <pattern>`: Search logs for regex pattern
+- `search <file> <pattern>`: Search logs for regex pattern, displays line numbers
   - `-i, --ignore-case`: Case insensitive search
-- `tail <file>`: Tail logs in real-time
+- `tail <file>`: Tail logs in real-time with truncation detection
   - `-n, --lines`: Number of lines to show initially (default: 10)
 
 ## Configuration
